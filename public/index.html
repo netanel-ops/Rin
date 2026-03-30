@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nati Don't Shout - Market Seeding Tool</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .subtitle {
+      color: #888;
+      margin-bottom: 30px;
+    }
+    
+    .section {
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid #333;
+    }
+    
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #fff;
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    label {
+      font-size: 14px;
+      color: #aaa;
+      margin-bottom: 6px;
+    }
+    
+    input, select {
+      background: #0f0f0f;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 10px;
+      color: #e0e0e0;
+      font-size: 14px;
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    button.secondary {
+      background: #333;
+    }
+    
+    button.danger {
+      background: #d32f2f;
+    }
+    
+    .table-container {
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+    
+    th {
+      background: #0f0f0f;
+      font-weight: 600;
+      color: #aaa;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    th:first-child, td:first-child {
+      position: sticky;
+      left: 0;
+      background: #1a1a1a;
+      z-index: 5;
+    }
+    
+    th:first-child {
+      z-index: 15;
+    }
+    
+    tr:hover {
+      background: #222;
+    }
+    
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .status-planned { background: #444; color: #aaa; }
+    .status-approved { background: #2196f3; color: white; }
+    .status-executing { background: #ff9800; color: white; }
+    .status-executed { background: #4caf50; color: white; }
+    .status-failed { background: #f44336; color: white; }
+    
+    .countdown {
+      color: #ff9800;
+      font-weight: 600;
+    }
+    
+    .logs {
+      background: #0f0f0f;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    
+    .log-entry {
+      margin-bottom: 4px;
+    }
+    
+    .log-error { color: #f44336; }
+    .log-success { color: #4caf50; }
+    .log-info { color: #2196f3; }
+    
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Nati Don't Shout</h1>
+    <p class="subtitle">Market Seeding Tool for Rain Protocol</p>
+    
+    <!-- Config Section -->
+    <div class="section">
+      <div class="section-title">Configuration</div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Gemini API Key</label>
+          <input type="password" id="geminiKey" placeholder="Enter Gemini API key">
+        </div>
+      </div>
+      
+      <button onclick="saveGeminiKey()">Save API Key</button>
+    </div>
+    
+    <!-- Generation Section -->
+    <div class="section">
+      <div class="section-title">Generate Markets</div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Number of Markets</label>
+          <input type="number" id="numMarkets" value="10" min="1">
+        </div>
+        
+        <div class="form-group">
+          <label>Total Allocation ($)</label>
+          <input type="number" id="totalAllocation" value="150" min="9" step="1">
+        </div>
+        
+        <div class="form-group">
+          <label>Size Deviation (%)</label>
+          <input type="number" id="sizeDeviation" value="20" min="0" max="100">
+        </div>
+        
+        <div class="form-group">
+          <label>Base Interval (minutes)</label>
+          <input type="number" id="baseInterval" value="60" min="1">
+        </div>
+        
+        <div class="form-group">
+          <label>Market Length (days)</label>
+          <input type="number" id="marketLength" value="14" min="1">
+        </div>
+      </div>
+      
+      <button onclick="generateMarkets()">Generate Markets 🤖</button>
+    </div>
+    
+    <!-- Markets Table -->
+    <div class="section">
+      <div class="section-title">Markets</div>
+      
+      <div class="controls">
+        <button onclick="queueSelected()" class="secondary">Queue Selected</button>
+        <button onclick="launchAll()">Sign & Launch All 🚀</button>
+        <button onclick="deleteSelected()" class="danger">Delete Selected</button>
+        <button onclick="retryFailed()" class="secondary">Retry Failed ↺</button>
+        <button onclick="refreshMarkets()" class="secondary">Refresh</button>
+      </div>
+      
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+              <th>Status</th>
+              <th>Title</th>
+              <th>Allocation</th>
+              <th>Fires In</th>
+              <th>Length (days)</th>
+              <th>Options</th>
+              <th>Probabilities</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="marketsTable">
+            <tr>
+              <td colspan="9" style="text-align: center; padding: 40px; color: #666;">
+                No markets yet. Generate some above!
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Logs Section -->
+    <div class="section">
+      <div class="section-title">Execution Logs</div>
+      <div class="logs" id="logs">
+        <div class="log-info">Ready to generate markets...</div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const API_BASE = '';
+    let markets = [];
+    
+    // Log helper
+    function log(message, type = 'info') {
+      const logs = document.getElementById('logs');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logs.appendChild(entry);
+      logs.scrollTop = logs.scrollHeight;
+    }
+    
+    // Save Gemini API key
+    async function saveGeminiKey() {
+      const apiKey = document.getElementById('geminiKey').value;
+      if (!apiKey) return alert('Please enter API key');
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/config/gemini`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apiKey })
+        });
+        
+        if (res.ok) {
+          log('Gemini API key configured', 'success');
+          alert('API key saved!');
+        } else {
+          throw new Error(await res.text());
+        }
+      } catch (error) {
+        log('Failed to save API key: ' + error.message, 'error');
+        alert('Error: ' + error.message);
+      }
+    }
+    
+    // Generate markets
+    async function generateMarkets() {
+      const config = {
+        num_markets: parseInt(document.getElementById('numMarkets').value),
+        total_allocation: parseFloat(document.getElementById('totalAllocation').value),
+        size_deviation_pct: parseFloat(document.getElementById('sizeDeviation').value),
+        base_interval_minutes: parseInt(document.getElementById('baseInterval').value),
+        market_length_days: parseInt(document.getElementById('marketLength').value)
+      };
+      
+      log(`Generating ${config.num_markets} markets...`, 'info');
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          log(`Generated ${data.count} markets successfully!`, 'success');
+          refreshMarkets();
+        } else {
+          throw new Error(data.error);
+        }
+      } catch (error) {
+        log('Generation failed: ' + error.message, 'error');
+        alert('Error: ' + error.message);
+      }
+    }
+    
+    // Refresh markets table
+    async function refreshMarkets() {
+      try {
+        const res = await fetch(`${API_BASE}/api/markets`);
+        markets = await res.json();
+        renderMarketsTable();
+      } catch (error) {
+        log('Failed to fetch markets: ' + error.message, 'error');
+      }
+    }
+    
+    // Render markets table
+    function renderMarketsTable() {
+      const tbody = document.getElementById('marketsTable');
+      
+      if (markets.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #666;">No markets yet. Generate some above!</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = markets.map(m => {
+        const fireIn = Math.max(0, m.fire_at - Math.floor(Date.now() / 1000));
+        const minutes = Math.floor(fireIn / 60);
+        const seconds = fireIn % 60;
+        
+        return `
+          <tr>
+            <td><input type="checkbox" class="market-checkbox" data-id="${m.id}" ${m.status !== 'planned' && m.status !== 'failed' ? 'disabled' : ''}></td>
+            <td><span class="status-badge status-${m.status}">${m.status}</span></td>
+            <td>${m.title}</td>
+            <td>$${m.allocation.toFixed(2)}</td>
+            <td class="countdown">${minutes}m ${seconds}s</td>
+            <td>${m.market_length_days}</td>
+            <td>${m.options.join(', ')}</td>
+            <td>${m.probabilities.join(', ')}</td>
+            <td>
+              ${m.status === 'failed' ? `<button class="secondary" onclick="retryMarket(${m.id})">↺</button>` : ''}
+              ${m.status === 'planned' || m.status === 'failed' ? `<button class="danger" onclick="deleteMarket(${m.id})">🗑</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+      
+      // Update countdowns every second
+      setTimeout(renderMarketsTable, 1000);
+    }
+    
+    // Toggle select all
+    function toggleSelectAll() {
+      const checked = document.getElementById('selectAll').checked;
+      document.querySelectorAll('.market-checkbox:not(:disabled)').forEach(cb => {
+        cb.checked = checked;
+      });
+    }
+    
+    // Get selected market IDs
+    function getSelectedIds() {
+      return Array.from(document.querySelectorAll('.market-checkbox:checked'))
+        .map(cb => parseInt(cb.dataset.id));
+    }
+    
+    // Queue selected
+    async function queueSelected() {
+      const ids = getSelectedIds();
+      if (ids.length === 0) return alert('No markets selected');
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/queue`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ marketIds: ids })
+        });
+        
+        if (res.ok) {
+          log(`Queued ${ids.length} markets`, 'success');
+          refreshMarkets();
+        }
+      } catch (error) {
+        log('Queue failed: ' + error.message, 'error');
+      }
+    }
+    
+    // Launch all approved
+    async function launchAll() {
+      // TODO: Get connected wallet address from MetaMask/RainAA
+      alert('Connect wallet and sign transaction (not implemented yet - needs RainAA integration)');
+      
+      /*
+      const connectedWallet = await getConnectedWallet();
+      
+      const res = await fetch(`${API_BASE}/api/launch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connectedWallet })
+      });
+      
+      const data = await res.json();
+      log(data.message, data.success ? 'success' : 'error');
+      */
+    }
+    
+    // Delete selected
+    async function deleteSelected() {
+      const ids = getSelectedIds();
+      if (ids.length === 0) return alert('No markets selected');
+      
+      if (!confirm(`Delete ${ids.length} market(s)?`)) return;
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/delete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ marketIds: ids })
+        });
+        
+        if (res.ok) {
+          log(`Deleted ${ids.length} markets`, 'success');
+          refreshMarkets();
+        }
+      } catch (error) {
+        log('Delete failed: ' + error.message, 'error');
+      }
+    }
+    
+    // Retry failed
+    async function retryFailed() {
+      const failedIds = markets.filter(m => m.status === 'failed').map(m => m.id);
+      if (failedIds.length === 0) return alert('No failed markets');
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/retry`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ marketIds: failedIds })
+        });
+        
+        if (res.ok) {
+          log(`Retrying ${failedIds.length} failed markets`, 'success');
+          refreshMarkets();
+        }
+      } catch (error) {
+        log('Retry failed: ' + error.message, 'error');
+      }
+    }
+    
+    // Single market actions
+    async function retryMarket(id) {
+      await fetch(`${API_BASE}/api/retry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ marketIds: [id] })
+      });
+      refreshMarkets();
+    }
+    
+    async function deleteMarket(id) {
+      if (!confirm('Delete this market?')) return;
+      await fetch(`${API_BASE}/api/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ marketIds: [id] })
+      });
+      refreshMarkets();
+    }
+    
+    // Initial load
+    refreshMarkets();
+  </script>
+</body>
+</html>
