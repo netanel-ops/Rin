@@ -1,0 +1,21 @@
+{
+  "name": "rain-ops-generator",
+  "version": "1.0.0",
+  "description": "Nati Don't Shout - Market Seeding Tool",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": ["rain", "markets", "ai"],
+  "author": "Joni",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "@google/generative-ai": "^0.21.0",
+    "@buidlrrr/rain-sdk": "^1.1.0",
+    "viem": "^2.21.54",
+    "better-sqlite3": "^11.8.1"
+  }
+}
