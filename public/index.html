@@ -29,6 +29,26 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .wallet-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: auto;
+    }
+    
+    .wallet-address {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-family: 'Courier New', monospace;
+      color: #4caf50;
     }
     
     .subtitle {
@@ -203,7 +223,13 @@
 </head>
 <body>
   <div class="container">
-    <h1>Nati Don't Shout</h1>
+    <h1>
+      <span>Nati Don't Shout</span>
+      <div class="wallet-section">
+        <span class="wallet-address" id="walletDisplay">Not Connected</span>
+        <button onclick="connectWallet()" id="connectBtn">Connect Wallet</button>
+      </div>
+    </h1>
     <p class="subtitle">Market Seeding Tool for Rain Protocol</p>
     
     <!-- Config Section -->
@@ -301,9 +327,27 @@
     </div>
   </div>
   
-  <script>
+  <script type="module">
+    import { Rain } from 'https://cdn.jsdelivr.net/npm/@buidlrrr/rain-sdk/+esm';
+    
     const API_BASE = '';
     let markets = [];
+    let connectedWallet = null;
+    let rainSDK = null;
+    
+    // Make functions global
+    window.log = log;
+    window.saveGeminiKey = saveGeminiKey;
+    window.generateMarkets = generateMarkets;
+    window.refreshMarkets = refreshMarkets;
+    window.toggleSelectAll = toggleSelectAll;
+    window.queueSelected = queueSelected;
+    window.launchAll = launchAll;
+    window.deleteSelected = deleteSelected;
+    window.retryFailed = retryFailed;
+    window.retryMarket = retryMarket;
+    window.deleteMarket = deleteMarket;
+    window.connectWallet = connectWallet;
     
     // Log helper
     function log(message, type = 'info') {
@@ -313,6 +357,40 @@
       entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
       logs.appendChild(entry);
       logs.scrollTop = logs.scrollHeight;
+    }
+    
+    // Connect wallet
+    async function connectWallet() {
+      try {
+        if (!window.ethereum) {
+          alert('Please install MetaMask or another Web3 wallet');
+          return;
+        }
+        
+        log('Connecting wallet...', 'info');
+        
+        // Request account access
+        const accounts = await window.ethereum.request({ 
+          method: 'eth_requestAccounts' 
+        });
+        
+        connectedWallet = accounts[0];
+        
+        // Initialize Rain SDK
+        rainSDK = new Rain();
+        await rainSDK.initialize({ chainId: 42161 }); // Arbitrum One
+        
+        // Update UI
+        document.getElementById('walletDisplay').textContent = 
+          `${connectedWallet.slice(0, 6)}...${connectedWallet.slice(-4)}`;
+        document.getElementById('connectBtn').textContent = 'Connected ✓';
+        document.getElementById('connectBtn').disabled = true;
+        
+        log(`Wallet connected: ${connectedWallet}`, 'success');
+      } catch (error) {
+        log('Wallet connection failed: ' + error.message, 'error');
+        alert('Failed to connect wallet: ' + error.message);
+      }
     }
     
     // Save Gemini API key
@@ -456,21 +534,57 @@
     
     // Launch all approved
     async function launchAll() {
-      // TODO: Get connected wallet address from MetaMask/RainAA
-      alert('Connect wallet and sign transaction (not implemented yet - needs RainAA integration)');
+      if (!connectedWallet) {
+        alert('Please connect your wallet first');
+        return;
+      }
       
-      /*
-      const connectedWallet = await getConnectedWallet();
+      if (!rainSDK) {
+        alert('Rain SDK not initialized');
+        return;
+      }
       
-      const res = await fetch(`${API_BASE}/api/launch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ connectedWallet })
-      });
+      log('Preparing batch transaction...', 'info');
       
-      const data = await res.json();
-      log(data.message, data.success ? 'success' : 'error');
-      */
+      try {
+        const res = await fetch(`${API_BASE}/api/launch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ connectedWallet })
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error);
+        }
+        
+        // data should contain: { transactions: [...], message: '...' }
+        log(data.message, 'success');
+        
+        if (data.transactions && data.transactions.length > 0) {
+          log(`Sending batch of ${data.transactions.length} transactions...`, 'info');
+          
+          // Send transactions via Rain SDK
+          for (const tx of data.transactions) {
+            try {
+              const txHash = await window.ethereum.request({
+                method: 'eth_sendTransaction',
+                params: [tx]
+              });
+              
+              log(`Transaction sent: ${txHash}`, 'success');
+            } catch (txError) {
+              log(`Transaction failed: ${txError.message}`, 'error');
+            }
+          }
+          
+          refreshMarkets();
+        }
+      } catch (error) {
+        log('Launch failed: ' + error.message, 'error');
+        alert('Error: ' + error.message);
+      }
     }
     
     // Delete selected
